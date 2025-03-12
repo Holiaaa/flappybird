@@ -9,3 +9,6 @@ Font by chequered
 This project use SDL2 (with SDL2_image, SDL2_ttf, SDL2_mixer)
 
 To build the project you just need to type `make run`
+
+## Image of the game.
+![alt text](https://github.com/Holiaaa/flappybird/blob/main/image.png?raw=true)
