@@ -11,4 +11,4 @@ run:
 	@./main
 
 clean:
-	@rm main
+	@rm flappy
