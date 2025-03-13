@@ -63,6 +63,8 @@ int main(int argc, char *argv[]) {
 
     if (TTF_Init() == -1) {
         std::cout << "Error while initializing SDL_ttf. error : " << TTF_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
     }
 
     if (IMG_Init(IMG_INIT_PNG) == 0) {
