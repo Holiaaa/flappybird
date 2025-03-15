@@ -11,7 +11,7 @@ public:
 };
 
 int main(int argc, char *argv[]) {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Mon jeu");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "FlappyBird (SFML version)");
 
     sf::Texture birdTexture;
     if (!birdTexture.loadFromFile("assets/sprites/bird.png")) {
