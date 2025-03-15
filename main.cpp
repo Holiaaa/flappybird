@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
         window.draw(score);
         window.display();
 
-        // since SFML doesn't support delay by default like SDL with SDL_Delay i use the sleep function with a some miniseconds to do that.
+        // since SFML doesn't support delay by default like SDL with SDL_Delay i use the sleep function with a some milliseconds to do that.
         sf::sleep(sf::milliseconds(10));
     }
 
