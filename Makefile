@@ -1,13 +1,5 @@
-# Install require libs before building!
-
-LIBS := -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
+# use make to build the project
+# make sure you have sfml installed!
 
 all:
-	@g++ main.cpp -o main $(LIBS)
-
-run:
-	@g++ main.cpp -o main $(LIBS)
-	@./main
-
-clean:
-	@rm main
+	@g++ main.cpp -o flappy -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
