@@ -8,7 +8,7 @@ all:
 
 run:
 	@g++ main.cpp -o flappy.exe $(LIBS)
-	@./main
+	@start flappy.exe
 
 clean:
-	@rm flappy
+	@del flappy.exe
