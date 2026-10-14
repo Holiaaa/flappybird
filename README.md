@@ -1,4 +1,6 @@
 # FlappyBird Clone (SFML Version)
+
+### There is no 2.0 version of flappybird built with SFML. Only the SDL version was made.
 This is a SFML version of FlappyBird.
 
 It's the port from the SDL version (you can find in main branch)
