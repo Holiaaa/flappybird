@@ -9,6 +9,8 @@
 
 // made by Téo JAUFFRET (Holiaaa)
 
+// version 2.0
+
 class Pipe {
 public:
     int posX = 0;
@@ -155,8 +157,8 @@ int main(int argc, char *argv[]) {
         SDL_Quit();
     }
 
-    SDL_Texture *birdTexture = IMG_LoadTexture(renderer, "./assets/sprites/bird.png");
-    if (!pipe1Texture) {
+    SDL_Texture *birdTexture = IMG_LoadTexture(renderer, "./assets/sprites/bird_0.png");
+    if (!birdTexture) {
         std::cout << "Error while creating texture for bird. error : " << IMG_GetError() << std::endl;
         SDL_DestroyTexture(backgroundTexture);
         SDL_DestroyTexture(pipe0Texture);
@@ -171,11 +173,25 @@ int main(int argc, char *argv[]) {
 
     Mix_Chunk* jumpsound = Mix_LoadWAV("./assets/sounds/jump.ogg");
     if (jumpsound == NULL) {
-        printf("Mix_LoadMUS failed: %s\n", Mix_GetError());
+        printf("Mix_LoadWAV failed: %s\n", Mix_GetError());
+        return -1;
+    }
+
+    Mix_Chunk* coinsound = Mix_LoadWAV("./assets/sounds/pickupCoin.wav");
+    if (coinsound == NULL) {
+        printf("Mix_LoadWAV failed: %s\n", Mix_GetError());
+        return -1;
+    }
+
+    Mix_Chunk* explosion = Mix_LoadWAV("./assets/sounds/explosion.wav");
+    if (explosion == NULL) {
+        printf("Mix_LoadWAV failed: %s\n", Mix_GetError());
         return -1;
     }
 
     Mix_AllocateChannels(16);
+
+    int birdId = 0;
 
     int score = 0;
     char scoreBuffer[20];
@@ -188,7 +204,16 @@ int main(int argc, char *argv[]) {
     double angleSpeed = 0;
     bool collideWithAPipe = false;
 
+    bool explosionBool = true;
+
     int spacePressed = 0;
+
+    bool menu = true;
+    bool skinmenu = false;
+
+    bool skinPressed = false;
+
+    bool over30 = false;
 
     SDL_Color white = {255, 255, 255};
 
@@ -209,12 +234,105 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 14, 124, 247, 255);
         SDL_RenderClear(renderer);
 
         SDL_RenderCopy(renderer, backgroundTexture, NULL, NULL);
 
         // loop start here
+
+        if (skinmenu) {
+            SDL_Rect skinMenuTitle = {275, 50, 250, 100};
+            renderScore(renderer, "Skin Menu", skinMenuTitle);
+
+            SDL_Rect rightArrow = {430, 250, 40, 40};
+            renderScore(renderer, ">", rightArrow);
+
+            SDL_Rect leftArrow = {330, 250, 40, 40};
+            renderScore(renderer, "<", leftArrow);
+
+            char buffer[32]; // Crée un tableau de caractères temporaire
+            snprintf(buffer, sizeof(buffer), "./assets/sprites/bird_%d.png", birdId); // Formate la chaîne avec la variable
+            birdTexture = IMG_LoadTexture(renderer, buffer);
+            if (!birdTexture) {
+                std::cout << "Error while creating texture for bird. error : " << IMG_GetError() << std::endl;
+                SDL_DestroyTexture(backgroundTexture);
+                SDL_DestroyTexture(pipe0Texture);
+                SDL_DestroyTexture(pipe1Texture);
+                SDL_DestroyRenderer(renderer);
+                SDL_DestroyWindow(window);
+                Mix_Quit();
+                IMG_Quit();
+                TTF_Quit();
+                SDL_Quit();
+            }
+
+            SDL_Rect players = {375, 250, 50, 40};
+            SDL_Point centers = {players.w /2, players.h/2};
+            SDL_RenderCopyEx(renderer, birdTexture, NULL, &players, angle, &centers, SDL_FLIP_NONE);
+
+            if (state[SDL_SCANCODE_ESCAPE]) {
+                skinmenu = false;
+            }
+
+            if (over30) {
+                SDL_Rect secretSkinText = {325, 450, 150, 75};
+                renderScore(renderer, "Secret skin unlocked!", secretSkinText);
+            }
+
+            if (state[SDL_SCANCODE_LEFT]) {
+                if (!skinPressed) {
+                    birdId--;
+                    if (birdId < 0) {
+                        birdId = 0;
+                    }
+                    skinPressed = true;
+                }
+            } else if (state[SDL_SCANCODE_RIGHT]) {
+                if (!skinPressed) {
+                    if (over30) {
+                        birdId++;
+                        if (birdId > 5) {
+                            birdId = 5;
+                        }
+                        skinPressed = true;
+                    } else {
+                        birdId++;
+                        if (birdId > 4) {
+                            birdId = 4;
+                        }
+                        skinPressed = true;
+                    }
+                }
+            }
+
+            if (!state[SDL_SCANCODE_LEFT] && !state[SDL_SCANCODE_RIGHT]) {
+                skinPressed = false;
+            }
+
+            SDL_RenderPresent(renderer);
+            continue;
+        }
+
+        if (menu) {
+            SDL_Rect menuRect = {275, 200, 250, 100};
+            renderScore(renderer, "FlappyBird", menuRect);
+
+            SDL_Rect spaceRect = {275, 280, 250, 30};
+            renderScore(renderer, "Press SPACE", spaceRect);
+
+            SDL_Rect skinRect = {277, 310, 250, 30};
+            renderScore(renderer, "Press M for SKIN", skinRect);
+
+            if (state[SDL_SCANCODE_SPACE]) {
+                menu = false;
+            } else if (state[SDL_SCANCODE_SEMICOLON]) {
+                skinmenu = true;
+            }
+
+            SDL_RenderPresent(renderer);
+            continue;
+        }
 
         SDL_Rect player = {100, playerYpos, 50, 40};
 
@@ -235,6 +353,11 @@ int main(int argc, char *argv[]) {
             }
         } else {
             spacePressed = 0;
+        }
+
+        if (player.y < 0) {
+            playerSpeed = 0;
+            playerYpos = 0;
         }
 
         if (player.y > 600) {
@@ -275,6 +398,13 @@ int main(int argc, char *argv[]) {
 
                 if (SDL_HasIntersection(&player, &_pipe)) {
                     collideWithAPipe = true;
+                    if (explosionBool) {
+                        explosionBool = false;
+                        if (Mix_PlayChannel(-1, explosion, 0) == -1) {
+                            printf("Mix_PlayChannel failed: %s\n", Mix_GetError());
+                            return -1;
+                        }
+                    }
                 }
             }
         }
@@ -293,6 +423,13 @@ int main(int argc, char *argv[]) {
 
                 if (SDL_HasIntersection(&player, &_pipe)) {
                     collideWithAPipe = true;
+                    if (explosionBool) {
+                        explosionBool = false;
+                        if (Mix_PlayChannel(-1, explosion, 0) == -1) {
+                            printf("Mix_PlayChannel failed: %s\n", Mix_GetError());
+                            return -1;
+                        }
+                    }
                 }
             }
         }
@@ -300,6 +437,13 @@ int main(int argc, char *argv[]) {
         for (Pipe& pipe : groundPipes) {
             if (pipe.posX-20 == player.x) {
                 score++;
+                if (score >= 20) {
+                    over30 = true;
+                }
+                if (Mix_PlayChannel(-1, coinsound, 0) == -1) {
+                    printf("Mix_PlayChannel failed: %s\n", Mix_GetError());
+                    return -1;
+                }
                 sprintf(scoreBuffer, "%d", score);
             }
         }
@@ -316,9 +460,56 @@ int main(int argc, char *argv[]) {
                 }
             }
             renderScore(renderer, "Game Over", gameoverRect);
+
+            if (state[SDL_SCANCODE_ESCAPE]) {
+                playerYpos = 100;
+                playerSpeed = 0;
+                score = 0;
+                sprintf(scoreBuffer, "%d", score);
+                scoreYpos = 50;
+                gameoverYpos = -80;
+                angle = 0.0;
+                angleSpeed = 0;
+                collideWithAPipe = false;
+
+                for (int i = 0; i < 4; i++) {
+                    groundPipes[i].posX = 300*i + 800;
+                    groundPipes[i].posY = 320 + (std::rand() % 150);
+                }
+
+                for (int i = 0; i < 4; i++) {
+                    airPipes[i].posX = groundPipes[i].posX;
+                    airPipes[i].posY = groundPipes[i].posY - 480;
+                }
+
+                menu = true;
+            }
+
+            if (state[SDL_SCANCODE_R]) {
+                // Reset game state
+                playerYpos = 100;
+                playerSpeed = 0;
+                score = 0;
+                sprintf(scoreBuffer, "%d", score);
+                scoreYpos = 50;
+                gameoverYpos = -80;
+                angle = 0.0;
+                angleSpeed = 0;
+                collideWithAPipe = false;
+
+                for (int i = 0; i < 4; i++) {
+                    groundPipes[i].posX = 300*i + 800;
+                    groundPipes[i].posY = 320 + (std::rand() % 150);
+                }
+
+                for (int i = 0; i < 4; i++) {
+                    airPipes[i].posX = groundPipes[i].posX;
+                    airPipes[i].posY = groundPipes[i].posY - 480;
+                }
+            }
         }
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(renderer, 14, 124, 247, 255);
         renderScore(renderer, scoreBuffer, scoreRect);
 
         SDL_RenderPresent(renderer);
