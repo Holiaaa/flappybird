@@ -9,7 +9,7 @@
 
 // made by Téo JAUFFRET (Holiaaa)
 
-// version 2.0
+// version 2.1
 
 class Pipe {
 public:
@@ -17,19 +17,12 @@ public:
     int posY = 0;
 };
 
-void renderScore(SDL_Renderer *renderer, const char *scoreText, SDL_Rect scoreRect) {
+void renderScore(SDL_Renderer *renderer, TTF_Font *font,const char *scoreText, SDL_Rect scoreRect) {
     int fontSize = 48;
-    TTF_Font *font = NULL;
     int textW = 0, textH = 0;
 
     while (fontSize > 6) {
-        if (font) TTF_CloseFont(font);
-        font = TTF_OpenFont("./assets/font/font.ttf", fontSize);
-        if (!font) {
-            SDL_Log("Font error: %s", TTF_GetError());
-            return;
-        }
-
+        TTF_SetFontSize(font, fontSize);
         TTF_SizeText(font, scoreText, &textW, &textH);
         if (textW <= scoreRect.w && textH <= scoreRect.h) {
             break;
@@ -52,7 +45,6 @@ void renderScore(SDL_Renderer *renderer, const char *scoreText, SDL_Rect scoreRe
 
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
-    TTF_CloseFont(font);
 }
 
 int main(int argc, char *argv[]) {
@@ -191,6 +183,12 @@ int main(int argc, char *argv[]) {
 
     Mix_AllocateChannels(16);
 
+    TTF_Font *font = TTF_OpenFont("./assets/font/font.ttf", 48);
+    if (!font) {
+        std::cout << "Error while loading font. error : " << TTF_GetError() << std::endl;
+        return -1;
+    }
+
     int birdId = 0;
 
     int score = 0;
@@ -243,13 +241,13 @@ int main(int argc, char *argv[]) {
 
         if (skinmenu) {
             SDL_Rect skinMenuTitle = {275, 50, 250, 100};
-            renderScore(renderer, "Skin Menu", skinMenuTitle);
+            renderScore(renderer, font,"Skin Menu", skinMenuTitle);
 
             SDL_Rect rightArrow = {430, 250, 40, 40};
-            renderScore(renderer, ">", rightArrow);
+            renderScore(renderer, font,">", rightArrow);
 
             SDL_Rect leftArrow = {330, 250, 40, 40};
-            renderScore(renderer, "<", leftArrow);
+            renderScore(renderer, font,"<", leftArrow);
 
             char buffer[32]; // Crée un tableau de caractères temporaire
             snprintf(buffer, sizeof(buffer), "./assets/sprites/bird_%d.png", birdId); // Formate la chaîne avec la variable
@@ -277,7 +275,7 @@ int main(int argc, char *argv[]) {
 
             if (over30) {
                 SDL_Rect secretSkinText = {325, 450, 150, 75};
-                renderScore(renderer, "Secret skin unlocked!", secretSkinText);
+                renderScore(renderer, font,"Secret skin unlocked!", secretSkinText);
             }
 
             if (state[SDL_SCANCODE_LEFT]) {
@@ -316,13 +314,13 @@ int main(int argc, char *argv[]) {
 
         if (menu) {
             SDL_Rect menuRect = {275, 200, 250, 100};
-            renderScore(renderer, "FlappyBird", menuRect);
+            renderScore(renderer, font,"FlappyBird", menuRect);
 
             SDL_Rect spaceRect = {275, 280, 250, 30};
-            renderScore(renderer, "Press SPACE", spaceRect);
+            renderScore(renderer, font,"Press SPACE", spaceRect);
 
             SDL_Rect skinRect = {277, 310, 250, 30};
-            renderScore(renderer, "Press M for SKIN", skinRect);
+            renderScore(renderer, font,"Press M for SKIN", skinRect);
 
             if (state[SDL_SCANCODE_SPACE]) {
                 menu = false;
@@ -459,7 +457,7 @@ int main(int argc, char *argv[]) {
                     gameoverYpos = gameoverYpos + 2.4;
                 }
             }
-            renderScore(renderer, "Game Over", gameoverRect);
+            renderScore(renderer, font,"Game Over", gameoverRect);
 
             if (state[SDL_SCANCODE_ESCAPE]) {
                 playerYpos = 100;
@@ -485,7 +483,7 @@ int main(int argc, char *argv[]) {
                 menu = true;
             }
 
-            if (state[SDL_SCANCODE_R]) {
+            if (state[SDL_SCANCODE_SPACE]) {
                 // Reset game state
                 playerYpos = 100;
                 playerSpeed = 0;
@@ -510,7 +508,7 @@ int main(int argc, char *argv[]) {
         }
 
         SDL_SetRenderDrawColor(renderer, 14, 124, 247, 255);
-        renderScore(renderer, scoreBuffer, scoreRect);
+        renderScore(renderer, font, scoreBuffer, scoreRect);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(7);
@@ -523,6 +521,7 @@ int main(int argc, char *argv[]) {
     SDL_DestroyTexture(birdTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_CloseFont(font);
     Mix_CloseAudio();
     Mix_Quit();
     IMG_Quit();
